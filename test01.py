@@ -6,11 +6,6 @@ from datetime import datetime
 import json
 import requests
 
-# 後で使うかも
-  # imgname = image_filenames[idx]
-  # jpath = join(RESULTS_DIR, basename(imgname) + '.json')
-  # for idx, result in enumerate(response.json()['responses']): 
-
 ENDPOINT_URL = 'https://vision.googleapis.com/v1/images:annotate'
 
 def make_image_data(image_filenames): # img_requests(画像データ+VisionAPIの処理を入れる配列)を作る関数
@@ -38,14 +33,20 @@ def request_api(api_key, image_filenames): # VisionAPIを呼び出す関数
                           headers={'Content-Type': 'application/json'})
   return response
 
-# def inlcuded_person(result): # VisionAPIから得られた結果から人数を抜き取る
-
-#   return numbers
+def number_of_person(result): # VisionAPIから得られた結果から人数を抜き取る
+  detected_objects = []
+  included_person = 0
+  for item in result:
+    detected_objects.append(item["name"]) # 検出したオブジェクトを配列に格納する
+  for name in detected_objects:
+    if name == "Person": # "Person"だけを抜き取って、人数をカウントする
+      included_person += 1
+  return included_person
 
 def output_json(result): # VisionAPIから得られた結果をファイルとして出力する
   makedirs('jsons', exist_ok=True)
   now = datetime.now()
-  file_name = './jsons/' + 'log_' + now.strftime('%Y%m%d_%H%M') + '.json' # ファイル命名規則(./jsons/log_yyyydddd_hhmm.json)
+  file_name = './jsons/' + 'log_' + now.strftime('%Y%m%d_%H%M%S') + '.json' # ファイル命名規則(./jsons/log_yyyydddd_hhmm.json)
   with open(file_name, 'w') as f:
     json.dump(result, f, indent=2)
 
@@ -58,8 +59,9 @@ if __name__ == '__main__':
   else: # 引数が正常に設定できている
     response = request_api(api_key, image_filenames)
     if response.status_code != 200 or response.json().get('error'): # エラーメッセージ
-      print(response.text)
+      result = response.json()
+      print("エラーが起きています。APIキーを確認してください。")
     else: # 正常なら画面出力
-      result = response.json()['responses'][0]['localizedObjectAnnotations'] # 大量の入れ子構造になっているので、要対応
-      print(json.dumps(result, indent=2))
-      output_json(result)
+      result = response.json()['responses'][0]['localizedObjectAnnotations'] # 余分なな入れ子は取り除く
+      print(str(number_of_person(result)) + "人検出できました。")
+    output_json(result)
