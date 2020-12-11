@@ -34,12 +34,10 @@ def request_api(api_key, image_filenames): # VisionAPIを呼び出す関数
   return response
 
 def number_of_person(result): # VisionAPIから得られた結果から人数を抜き取る
-  detected_objects = []
   included_person = 0
   for item in result:
-    detected_objects.append(item["name"]) # 検出したオブジェクトを配列に格納する
-  for name in detected_objects:
-    if name == "Person": # "Person"だけを抜き取って、人数をカウントする
+    print(item["name"])
+    if item["name"] == "Person": # "Person"だけを抜き取って、人数をカウントする
       included_person += 1
   return included_person
 
